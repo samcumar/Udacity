@@ -1,0 +1,200 @@
+<!DOCTYPE html> <!-- The DOCTYPE tells the browser what kind of document this is (HTML) -->
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>My Notes</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body> <!--I was inquisitive about the HTML5 sectioning elements ie section, article, header and footer and I used it here-->
+    <header>
+      <h1> HTML Notes - Stages 0 and 1</h1>
+    </header>
+    <div class="mainbdy">
+      <div class="content">
+        <article class="notes">
+          <div class="hdr redhdr">
+            <h2 id="html">HTML</h2>
+          </div>
+          <div class="bdy redbdy">
+            <ul>
+              <li><span class="hghlgt">HTML</span> stands for Hypertext Markup Language.</li>
+              <li>It's a computer language that's interpreted by the web browser to display content to the users.</li>
+              <li>It's one of many document types that are stored on webservers</li>
+              <li>It's governed by a WorldWide standard.</li>
+              <li><span class="hghlgt">HTML</span> documents are linked together using hyperlinks</li>
+            </ul>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr greenhdr">
+            <h2 id="tags">Tags</h2>
+          </div>
+          <div class="bdy greenbdy">
+            <ul>
+              <li>Tags tell the browser to display content in a certain way.</li>
+              <li>There is a start tag "&lt; &gt;" and a closing tag like so "&lt;/ &gt;". For example the emphasis tag "&lt;em&gt; &lt;/em&gt;"</li>
+              <li>Not all tags have a closing tag. For example the image element "&lt;img&gt;". These are known as void tags</li>
+              <li>Tags with the content in between are known as an element i.e. &lt;tag&gt; content &lt;tag&gt;</li>
+            </ul>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr bluehdr">
+            <h2 id="blocks">Inline vs Block</h2>
+          </div>
+            <!-- I'm using symbols here to help display examples of tags ie using '&' -->
+          <div class="bdy bluebdy">
+            <p>
+              Inline elements work within a line of code. That is the surrounding content are all the same line and there are no line breaks.<br>
+              A good example of this is the span tag "&lt;span&gt; &lt;/span&gt;" and the emphasis tag "&lt;em&gt; &lt;/em&gt;".<br>
+            </p>
+            <p>
+              Block elements have an invisible block around them and starts on a new line. At the end of a block element the content that follow it start on a new line as well. <br>
+              A good example of this is the div tag "&lt;div&gt; &lt;/div&gt;" and the paragraph tag "&lt;p&gt; &lt;/p&gt;".
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr redhdr">
+            <h2 id="htmlcssdom">HTML CSS & DOM</h2>
+          </div>
+          <div class="bdy redbdy">
+            <ul>
+              <li><span class="hghlgt">HTML5</span> - provides structure to the document</li>
+              <li><span class="hghlgt">CSS</span> (Cascading Style Sheets)- provides the styling behind the document</li>
+              <li><span class="hghlgt">DOM</span> (Document Object Model) - made of <span class="hghlgt">HTML</span> elements in a tree-like structure and describes
+                  how the <span class="hghlgt">HTML</span> document is accessed by the browser</li>
+            </ul>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr greenhdr">
+            <h2 id="webdev">Web Development Tools - Chrome Browser</h2>
+          </div>
+          <div class="bdy greenbdy">
+            <p>
+              To access the developer tools in Chrome,  Click on the top-right hand corner &rarr; More Tools &rarr; Developer Tools. The developer tools show the <span class="hghlgt">DOM</span> behind the webpage.
+            </p>
+            <p>
+              You can use it to manipulate both the <span class="hghlgt">CSS</span> and <span class="hghlgt">HTML</span> code to try out new code and see
+              how it behaves without changing your underlying <span class="hghlgt">HTML</span> and <span class="hghlgt">CSS</span> code. You can just refresh the page if you don't like what you've done.
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr bluehdr">
+            <h2 id="box">Introduction to Boxes</h2>
+          </div>
+          <div class="bdy bluebdy">
+            <p>
+              There are boxes around block level elements. These boxes can be manipulated by <span class="hghlgt">CSS</span>, for example, displaying borders.
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr redhdr">
+            <h2 id="css">Linking to CSS stylesheet</h2>
+          </div>
+          <div class="bdy redbdy">
+            <p>
+              It is recommended to link to the <span class="hghlgt">CSS</span> file in your html file with &lt;link rel="stylesheet" href="style.css"&gt;. <br>
+              This is done in the &lt;head&gt; section of the <span class="hghlgt">HTML</span> file.
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr greenhdr">
+            <h2 id="morecss">CSS specifics and order</h2>
+          </div>
+          <div class="bdy greenbdy">
+            <p>
+              The order matters as to which <span class="hghlgt">CSS</span> styling takes precendance:<br>
+              Browser CSS (least) &rarr; Separate CSS file styling &rarr; In-html file styling &rarr; In Elements styling (most)
+            </p>
+            <p>
+              Specifics matter! If one selector is more specific than the others, then it takes precedence.
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr redhdr">
+            <h2 id="cssformat">CSS format</h2>
+          </div>
+          <div class="bdy redbdy">
+            <p>
+              <span class="hghlgt">CSS</span> form: selector &lcub;declaration&rcub; <br>
+              declaration is property&colon; value&semi; <br>
+              selector can either be an element, a named class or a named ID. There's more to it but that's the basics of it.<br>
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr greenhdr">
+            <h2 id="classid">Class vs ID for selectors</h2>
+          </div>
+          <div class="bdy greenbdy">
+            <p>
+              ID selector &rarr;  ID's are unique identifiers that uniquely identifies an element in <span class="hghlgt">HTML</span>. id is denoted by '&num;' eg #id <br>
+              Class selector &rarr; refers to a group of elements that can be styled together. class is denoted by '.' eg .class
+            </p>
+          </div>
+        </article>
+        <article class="notes">
+          <div class="hdr bluehdr">
+            <h2 id="boxmodel">Box Model</h2>
+          </div>
+          <div class="bdy bluebdy">
+            <ul>
+              <li>content (inner) &rarr; padding &rarr; border &rarr; margin (outer)</li>
+              <li>"box-sizing&colon; border-box&semi;" declaration is the width of content + padding + border. More preferable.</li>
+              <li>"display&colon; Flex&semi;" declaration shows boxes(blocks) in-line as opposed to one below the other.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+      <aside class="sidebar"> <!-- In the CSS style sheet, I used flex-boxes to position it to the side of my notes-->
+        <section class="toc">
+          <h2>Table of Contents</h2>
+          <ol class="toclist">
+            <li><a href="#html">HTML</a></li>
+            <li><a href="#tags">Tags</a></li>
+            <li><a href="#blocks">Inline vs Block</a></li>
+            <li><a href="#htmlcssdom">HTML CSS & DOM</a></li>
+            <li><a href="#webdev">Web Development Tools - Chrome Browser</a></li>
+            <li><a href="#box">Introduction to Boxes</a></li>
+            <li><a href="#css">Linking to CSS stylesheet</a></li>
+            <li><a href="#morecss">CSS specifics and order</a></li>
+            <li><a href="#cssformat">CSS format</a></li>
+            <li><a href="#classid">Class vs ID for selectors</a></li>
+            <li><a href="#boxmodel">Box Model</a></li>
+          </ol>
+        </section>
+        <section class="ref">
+          <h2>An Important note</h2>
+            <p>
+              <em>You won't be remember everything and so it's important to have a few references handy</em>.
+            </p>
+            As a result I have the following references handy:
+            <ul>
+              <li><a href="http://www.w3schools.com/">W3Schools web page</a></li>
+              <li><a href="http://www.htmlandcssbook.com">The HTML and CSS handbook</a> - It's a very nice handbook to have as it's very visual and easy to understand.</li>
+            </ul>
+            As like every other muscle...<em>The more you use <b>The more you'll remember</b></em>
+
+        </section>
+      </aside>
+    </div>
+        <!-- Referring to an image -->
+    <footer>
+      <img src="https://www.w3.org/html/logo/badge/html5-badge-h-css3.png" alt="HTML5 Powered with CSS3 / Styling" title="HTML5 Powered with CSS3 / Styling">
+      <img src="img/HTML5_Multimedia_128.png" alt="HTML5 Multimedia logo" />
+      <img src="img/HTML5_Performance_128.png" alt="HTML5 Perfomance logo" />
+      <img src="img/HTML5_Styling_128.png" alt="HTML5 Styling logo" />
+      <p>
+        Written by Sammy C!!
+      </p>
+    </footer>
+
+
+  </body>
+</html>

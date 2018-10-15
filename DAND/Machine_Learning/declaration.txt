@@ -1,0 +1,21 @@
+REFERENCES
+==========
+The following websites, blogs and forums were referenced for this project:
+http://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
+https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
+http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RandomizedSearchCV.html
+http://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html
+http://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html#sphx-glr-auto-examples-model-selection-plot-randomized-search-py
+http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html
+https://discussions.udacity.com/t/eda-on-financial-features/192556/28
+https://discussions.udacity.com/t/how-to-use-pipeline-for-feature-scalling/164178
+https://stats.stackexchange.com/questions/1826/cross-validation-in-plain-english
+http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.cross_val_score.html#sklearn.model_selection.cross_val_score
+http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html#sklearn.model_selection.StratifiedShuffleSplit
+http://scikit-learn.org/stable/modules/grid_search.html
+https://github.com/mdabros/SharpLearning/wiki/Hyperparameter-Tuning
+https://www.quora.com/What-is-the-best-way-to-understand-the-terms-precision-and-recall
+
+Declaration
+===========
+“I hereby confirm that this submission is my work. I have cited above the origins of any parts of the submission that were taken from Websites, books, forums, blog posts, github repositories, etc.”

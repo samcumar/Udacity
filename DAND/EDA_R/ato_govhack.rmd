@@ -1,0 +1,1294 @@
+Trends in Taxation of Australian workers by Sam Cumarasamy
+==========================================================
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+The data comes from a recent Government Hackathon called "GovHack 2017". The URL 
+from which this dataset can be downloaded from is 
+https://data.gov.au/dataset/govhackato. Click on the link "GovHack 2017". It 
+contains 3 years worth of data ie the years 2006, 2011 & 2015. The data is 
+aggregated at the Postcode level. It contains data compiled by the Australian 
+Taxation Office (ATO) and the Australian Bureau of Statistics (ABS). 
+For a good description of the data, look at the URL https://data.gov.au/dataset/govhackato/resource/1f187a2d-df9d-4e1e-871e-2bfcced4a5e4.
+
+From this particular data, I wanted to get an idea on what the current trends of 
+what taxation looks like for Australia. 
+
+There are a few items that are referred to in this analysis:
+- The working population is defined as the age groups between 15 and 64.
+- The tax definitions and how it is all calculated can be inferred from the 
+tax form "individual-tax-return-2015.pdf" which is part of this pack.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(alr3)
+library(energy)
+library(ggthemes)
+library(grid)
+library(gridExtra)
+library(reshape2)
+library(RColorBrewer)
+library(GGally)
+library(data.table)
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Load_the_Data}
+# Load the Data
+
+setwd("/Users/samcumar/Dropbox/education/nanodegree/DAND/R/project/ato")
+
+ato_abs.data <- read.csv("atoabsgovhack2017.csv")
+
+ato_abs.data$Salary.avg <- ato_abs.data$Salary.or.wages/ato_abs.data$Individuals
+
+#Fix up the column names
+setnames(ato_abs.data, old = c("X0.4.years", "X5.9.years", "X10.14.years", 
+                               "X15.19.years", "X20.24.years", "X25.29.years", 
+                               "X30.34.years", "X35.39.years", "X40.44.years", 
+                               "X45.49.years", "X50.54.years", "X55.59.years", 
+                               "X60.64.years", "X65.69.years", "X70.74.years", 
+                               "X75.79.years", "X80.84.years", "X85.89.years", 
+                               "X90.94.years", "X95.99.years", 
+                               "X100.years.and.over"), 
+         new = c("age.0to4.years", "age.5to9.years", "age.10to14.years", 
+                 "age15to19.years", "age.20to24.years", "age.25to29.years",
+                 "age.30to34.years", "age.35to39.years", "age.40to44.years", 
+                 "age.45to49.years", "age.50to54.years", "age.55to59.years", 
+                 "age.60to64.years", "age.65to69.years", "age.70to74.years", 
+                 "age.75to79.years", "age.80to84.years", "age.85to89.years", 
+                 "age.90to94.years", "age.95to99.years", 
+                 "age.100.years.and.over")
+         )
+
+setnames(ato_abs.data, old = c("under.or.0", "X.1.to.1000", "X1000.1999", 
+                               "X2000."), 
+         new = c("ftn.income.under.or.0", "ftn.income.1.to.1000", 
+                 "ftn.income.1000to1999", "ftn.income.2000.and.over")
+         )
+
+#Creating a new column that designates which state the Postcode belongs to
+ato_abs.data[ato_abs.data$Postcode >= 800 & ato_abs.data$Postcode < 1000, 
+             c("State")] <- "Northern Territory"
+ato_abs.data[ato_abs.data$Postcode >= 1000 & ato_abs.data$Postcode <= 1999, 
+             c("State")] <- "New South Wales"
+ato_abs.data[ato_abs.data$Postcode >= 2000 & ato_abs.data$Postcode <= 2599, 
+             c("State")] <- "New South Wales"
+ato_abs.data[ato_abs.data$Postcode >= 2600 & ato_abs.data$Postcode <= 2619, 
+             c("State")] <- "Australian Capital Territory"
+ato_abs.data[ato_abs.data$Postcode >= 2620 & ato_abs.data$Postcode <= 2899, 
+             c("State")] <- "New South Wales"
+ato_abs.data[ato_abs.data$Postcode >= 2900 & ato_abs.data$Postcode <= 2920, 
+             c("State")] <- "Australian Capital Territory"
+ato_abs.data[ato_abs.data$Postcode >= 2921 & ato_abs.data$Postcode <= 2999, 
+             c("State")] <- "New South Wales"
+ato_abs.data[ato_abs.data$Postcode >= 3000 & ato_abs.data$Postcode <= 3999, 
+             c("State")] <- "Victoria"
+ato_abs.data[ato_abs.data$Postcode >= 8000 & ato_abs.data$Postcode <= 8999, 
+             c("State")] <- "Victoria"
+ato_abs.data[ato_abs.data$Postcode >= 4000 & ato_abs.data$Postcode <= 4999, 
+             c("State")] <- "Queensland"
+ato_abs.data[ato_abs.data$Postcode >= 9000 & ato_abs.data$Postcode <= 9999, 
+             c("State")] <- "Queensland"
+ato_abs.data[ato_abs.data$Postcode >= 5000 & ato_abs.data$Postcode <= 5999, 
+             c("State")] <- "South Australia"
+ato_abs.data[ato_abs.data$Postcode >= 6000 & ato_abs.data$Postcode <= 6999, 
+             c("State")] <- "West Australia"
+ato_abs.data[ato_abs.data$Postcode >= 7000 & ato_abs.data$Postcode <= 7999, 
+             c("State")] <- "Tasmania"
+
+# The 2nd column "Metro", designates whether the postcode belongs to a 
+# Metropolitan area ie Capital City or whther it's "Regional".
+ato_abs.data[ato_abs.data$Postcode >= 2000 & ato_abs.data$Postcode <= 2234, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 2235 & ato_abs.data$Postcode <= 2999, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 3000 & ato_abs.data$Postcode <= 3207, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 3208 & ato_abs.data$Postcode <= 3999, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 4000 & ato_abs.data$Postcode <= 4207, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 4300 & ato_abs.data$Postcode <= 4305, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 4500 & ato_abs.data$Postcode <= 4519, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 4208 & ato_abs.data$Postcode <= 4299, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 4306 & ato_abs.data$Postcode <= 4499, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 4520 & ato_abs.data$Postcode <= 4999, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 4208 & ato_abs.data$Postcode <= 4287, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 4550 & ato_abs.data$Postcode <= 4575, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 5000 & ato_abs.data$Postcode <= 5199, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 5200 & ato_abs.data$Postcode <= 5749, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 6000 & ato_abs.data$Postcode <= 6199, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 6200 & ato_abs.data$Postcode <= 6999, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 7000 & ato_abs.data$Postcode <= 7099, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 7100 & ato_abs.data$Postcode <= 7999, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 800 & ato_abs.data$Postcode <= 832, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 833 & ato_abs.data$Postcode <= 899, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 2600 & ato_abs.data$Postcode <= 2609, 
+             c("Metro")] <- "Metro"
+ato_abs.data[ato_abs.data$Postcode >= 2610 & ato_abs.data$Postcode <= 2619, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode >= 2900 & ato_abs.data$Postcode <= 2920, 
+             c("Metro")] <- "Regional"
+ato_abs.data[ato_abs.data$Postcode == 5950, c("Metro")] <- "Metro"
+
+# Setting up the categorical columns of Income.year, State and Metro
+ato_abs.data$Income.year <- factor(ato_abs.data$Income.year, 
+                                   levels = c(2006, 2011, 2015), 
+                                   ordered = T)
+
+ato_abs.data$State <- factor(ato_abs.data$State)
+
+ato_abs.data$Metro <- factor(ato_abs.data$Metro, 
+                             levels = c("Metro", "Regional"), 
+                             ordered = T)
+
+
+```
+
+The spreadsheet "atoabsgovhack2017.xlsx" was converted to a CSV file. From the
+CSV file the dataframe "ato_abs.data" was created. This whole analysis based on
+that dataframe. Each data point comes from each and every postcode in
+Australia. Using the document "Postcode_Ranges.doc", I was able to group each
+range of postcodes and aggregate the data to their relevant state. The column
+"State" in the dataframe represents which state that particular postcode 
+belongs to. 
+
+Columns from "Income.year" to "HELP.assessment.debt", contain data sourced
+from the Australian Taxation Office (ATO). The rest of the data is sourced from
+the Australian Bureau of Statistics (ABS).
+
+#Distribution of Salary and Tax payable at an Individual level
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(ato_abs.data, aes(x = Salary.or.wages/Individuals)) +
+  geom_histogram(binwidth = 1000, fill = "orange", color = "black") +
+  facet_wrap(~ Income.year, ncol = 1) +
+  scale_x_continuous(breaks = seq(0,120000, 10000)) +
+  xlab("Salary per Individual ($AUD)") +
+  ggtitle("Histogram of Salaries per Individual per Year")
+  
+```
+
+The above graphs show a normal distribution for salaries at an individual 
+level. From looking at the above histograms, 2006 shows a normal distribution
+and both 2011 and 2015 show a bit more of a positive skew. However, 2011 and 2015
+shows a bigger spread of salaries. The histogram for 2015, has shifted to more 
+to the compared to 2006 and 2011. Individuals are getting paid more in 2015 but 
+the distribution looks more spread out and shows a much longer tail. This is 
+confirmed by the boxplot below:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = ato_abs.data, aes(x = Income.year, y = (Salary.or.wages/Individuals))) + 
+  geom_boxplot(aes(color = Income.year)) +
+  xlab("Year of Income") +
+  ylab("Salary per individual") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + 
+  ggtitle("Salary per Individual for each Year - Boxplot")
+
+```
+
+The median salary per individual increased each year. The year 2015 had more 
+for the ACT. This is followed by the Northern Territory (NT). This is rather odd 
+because I would have thought it would have been the most populous states of NSW, 
+VIC or QLD. Not sure about NT, however it is known that the majority of the 
+people in the ACT work for the federal government. This could be taken as a 
+place where individuals can earn more and thereby contribute more to tax
+revenue.
+
+  
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(ato_abs.data, aes(x = Net.tax/Individuals)) +
+  geom_histogram(binwidth = 1000, fill = "orange", color = "black") +
+  facet_wrap(~ Income.year, ncol = 1) +
+  scale_x_continuous(breaks = seq(0,80000, 10000)) +
+   xlab("Net Tax payable per Individual ($AUD)") +
+  ggtitle("Histogram of Net Tax payable per Individual per Year")
+
+```
+
+A more positively skewed distribution is shown for Net tax payable for each
+year. Interestingly, 2011 shows a majority of individuals paying lower tax than
+the other 2 years. The histogram for 2015 shows similar pattern to 2006 and the
+amount of people paying tax more \$10000 has increased with a longer tail. The
+box plot below confirms this.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = ato_abs.data, aes(x = Income.year, y = (Net.tax/Individuals))) + 
+  geom_boxplot(aes(color = Income.year)) +
+  xlab("Year of Income") +
+  ylab("Net Tax per individual") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + 
+  ggtitle("Net Tax per Individual for each Year - Boxplot")
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, State_data}
+# I created a new dataframe "ato_tax.state". This new 
+# dataframe has been aggregated to each state of Australia for each year of 
+# 2006, 2011 & 2015. It summarises by State. Total Tax, Median Tax & Mean Tax
+ato_tax.state <- ato_abs.data %>% group_by(Income.year, State) %>% 
+  summarise(Net.tax_sum = sum(as.numeric(Net.tax)), 
+            Net.tax_median = median(Net.tax), 
+            Net.tax_mean = mean(Net.tax), 
+            individuals.total = sum(Individuals),
+            Taxable.income_sum = sum(as.numeric(Taxable.income.or.loss)), 
+            Taxable.income_median = median(Taxable.income.or.loss), 
+            Taxable.income_mean = mean(Taxable.income.or.loss), 
+            Medicare.levy_sum = sum(as.numeric(Medicare.levy)), 
+            Medicare.levy_median = median(Medicare.levy), 
+            Medicare.levy_mean = mean(Medicare.levy), 
+            Salary_sum = sum(as.numeric(Salary.or.wages)), 
+            Salary_median = median(Salary.or.wages), 
+            Salary_mean = mean(Salary.or.wages), 
+            Medicare.surcharge_sum = sum(as.numeric(Medicare.levy.surcharge)),
+            Medicare.surcharge_mean = mean(Medicare.levy.surcharge),
+            Medicare.surcharge_median = median(Medicare.levy.surcharge),
+            HELP.debt_sum = sum(as.numeric(HELP.assessment.debt)),
+            HELP.debt_median = median(HELP.assessment.debt),
+            HELP.debt_mean = mean(HELP.assessment.debt))
+
+```
+
+
+# Individuals submitting a tax return
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = ato_tax.state, aes(x = State, y = individuals.total/1000000, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  scale_fill_brewer(palette = "Dark2") +
+  xlab("States") +
+  ylab("Number of Individuals ('000,000s)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ggtitle("Number of Individuals submitting a tax return")
+
+```
+
+The above plot shows the number of individuals who submitted an income tax 
+return to the government. It just shows that there is a trending growth upwards 
+each year with the states on the east coast of Australia leading the way i.e. 
+New South Wales, Queensland and Victoria. These 3 states 
+ie New South Wales (NSW), Queensland (QLD) and Victoria (VIC) are the most 
+populous states in Australia and are found on the east coast of Australia. The 
+number of individuals submiting a tax return has risen over the 3 years of 
+income. This gives a feel for the distribution of data in the dataset.
+
+# Net Tax vs Salary/Wages
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,}
+
+ggplot(data = ato_tax.state, aes(x = State, y = Net.tax_sum/individuals.total, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") +
+  xlab("States") +
+  ylab("Net Tax paid per Individual(AUD)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) + 
+  ggtitle("Net Tax per Individual (AUD)")
+
+```
+
+The above bar plot, the data was averaged to the individual level. This was to
+make the data more readable where numbers weren't too big.
+
+Surprisingly, the Australian Capital Territory (ACT) and West Australia (WA) 
+have the honor of having on average the most Net tax paid per individual. Even 
+more so, Northern Territory (NT) is pretty much on par with NSW and it has a 
+lower population . Aside from WA, it's interesting to note that 2011 individuals 
+paid less Tax than in 2006. However, 2016 was higher than 2006 in terms of Net 
+Tax payable per individual. Later on we'll see correlation between Net.tax 
+and Salary/wages. This brings up both a point and a thought, that the states 
+ACT, WA and NT are the most likely states where individuals can find higher 
+salaries as opposed to other states. Therefore contribute more to the taxation 
+revenue.
+
+#The ageing population vs working population
+
+I wanted to look at the age distributions across each state and Australia. 
+This was to investigate the distribution on the working population and what 
+impact it could have on the future on both income and the ability to collect tax 
+from working people. It should be noted that the Australian Bureau of Statistics 
+(ABS) considers the working population to be in the range of 15-64 yrs of age. 
+Each age group is in ranges of 5yrs. The data was split into and aggregated up 
+to the different states and then country. To make the data more readible, the 
+y-axis for each bar plot was presented as the percentage of the total population 
+for each state and eventually the country. For the series of bar plots below 
+for each state, the y-axis shows the population as percentage of the State 
+total.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+abs.age.group.state <- ato_abs.data %>% group_by(Income.year, State) %>% 
+  summarise(age.0to4.years = sum(age.0to4.years), 
+            age.5to9.years = sum(age.5to9.years),
+            age.10to14.years = sum(age.10to14.years), 
+            age.15to19.years = sum(age15to19.years),
+            age.20to24.years = sum(age.20to24.years), 
+            age.25to29.years = sum(age.25to29.years),
+            age.30to34.years = sum(age.30to34.years), 
+            age.35to39.years = sum(age.35to39.years),
+            age.40to44.years = sum(age.40to44.years), 
+            age.45to49.years = sum(age.45to49.years),
+            age.50to54.years = sum(age.50to54.years), 
+            age.55to59.years = sum(age.55to59.years),
+            age.60to64.years = sum(age.60to64.years), 
+            age.65to69.years = sum(age.65to69.years),
+            age.70to74.years = sum(age.70to74.years), 
+            age.75to79.years = sum(age.75to79.years),
+            age.80to84.years = sum(age.80to84.years), 
+            age.85to89.years = sum(age.85to89.years),
+            age.90to94.years = sum(age.90to94.years), 
+            age.95to99.years = sum(age.95to99.years),
+            age.100.years.and.over = sum(age.100.years.and.over)
+            ) %>%
+  mutate(children.0to14 = (age.0to4.years + age.5to9.years + age.10to14.years), 
+         working.pop.15to64 = (age.15to19.years + age.20to24.years + 
+                                 age.25to29.years + age.30to34.years + 
+                               age.35to39.years + age.40to44.years + 
+                                 age.45to49.years + age.50to54.years + 
+                                 age.55to59.years + age.60to64.years),
+         pension.65to84 = (age.65to69.years + age.70to74.years + 
+                             age.75to79.years + age.80to84.years),
+         pension.85.and.over = (age.85to89.years + age.90to94.years + 
+                                  age.95to99.years + age.100.years.and.over)) %>%
+  mutate(state.population = children.0to14 + working.pop.15to64 + pension.65to84 + 
+           pension.85.and.over)
+
+#New South Wales
+age.group.NSW <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "New South Wales") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, age.30to34.years, 
+         age.35to39.years, age.40to44.years, age.45to49.years, age.50to54.years, 
+         age.55to59.years, age.60to64.years, age.65to69.years, age.70to74.years, 
+         age.75to79.years,age.80to84.years, age.85to89.years, age.90to94.years, 
+         age.95to99.years, age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+age.group.NSW$age.group <- factor(age.group.NSW$age.group, 
+                                  levels = c("age.0to4.years", 
+                                             "age.5to9.years", 
+                                             "age.10to14.years", 
+                                             "age.15to19.years", 
+                                             "age.20to24.years", 
+                                             "age.25to29.years", 
+                                             "age.30to34.years",
+                                             "age.35to39.years", 
+                                             "age.40to44.years", 
+                                             "age.45to49.years", 
+                                             "age.50to54.years", 
+                                             "age.55to59.years",
+                                             "age.60to64.years", 
+                                             "age.65to69.years", 
+                                             "age.70to74.years", 
+                                             "age.75to79.years", 
+                                             "age.80to84.years",
+                                             "age.85to89.years", 
+                                             "age.90to94.years", 
+                                             "age.95to99.years", 
+                                             "age.100.years.and.over"), 
+                                  ordered=TRUE)
+
+#Victoria
+age.group.VIC <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "Victoria") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, age.30to34.years, 
+         age.35to39.years, age.40to44.years, age.45to49.years, age.50to54.years, 
+         age.55to59.years, age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years,age.80to84.years, age.85to89.years, age.90to94.years, 
+         age.95to99.years, age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.VIC$age.group <- factor(age.group.VIC$age.group, 
+                                    levels = c("age.0to4.years", 
+                                               "age.5to9.years", 
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)
+
+#Queensland
+age.group.QLD <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "Queensland") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, 
+         age.25to29.years, age.30to34.years, age.35to39.years, age.40to44.years, 
+         age.45to49.years, age.50to54.years, age.55to59.years, age.60to64.years, 
+         age.65to69.years, age.70to74.years, age.75to79.years,age.80to84.years, 
+         age.85to89.years, age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.QLD$age.group <- factor(age.group.QLD$age.group, 
+                                    levels = c("age.0to4.years", 
+                                               "age.5to9.years",
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)
+  
+#Australian Capital Territory
+age.group.ACT <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "Australian Capital Territory") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, age.30to34.years, 
+         age.35to39.years, age.40to44.years, age.45to49.years, age.50to54.years, 
+         age.55to59.years, age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years, age.80to84.years, age.85to89.years, age.90to94.years, 
+         age.95to99.years, age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.ACT$age.group <- factor(age.group.QLD$age.group, 
+                                    levels = c("age.0to4.years", 
+                                               "age.5to9.years",
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)  
+
+#South Australia
+age.group.SA <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "South Australia") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years,
+         age.15to19.years, age.20to24.years, age.25to29.years, 
+         age.30to34.years, age.35to39.years, age.40to44.years, 
+         age.45to49.years, age.50to54.years, age.55to59.years, 
+         age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years,age.80to84.years, age.85to89.years, 
+         age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.SA$age.group <- factor(age.group.SA$age.group, 
+                                   levels = c("age.0to4.years", 
+                                              "age.5to9.years",
+                                              "age.10to14.years", 
+                                              "age.15to19.years", 
+                                              "age.20to24.years", 
+                                              "age.25to29.years", 
+                                              "age.30to34.years",
+                                              "age.35to39.years", 
+                                              "age.40to44.years", 
+                                              "age.45to49.years", 
+                                              "age.50to54.years", 
+                                              "age.55to59.years",
+                                              "age.60to64.years", 
+                                              "age.65to69.years", 
+                                              "age.70to74.years", 
+                                              "age.75to79.years", 
+                                              "age.80to84.years",
+                                              "age.85to89.years", 
+                                              "age.90to94.years", 
+                                              "age.95to99.years", 
+                                              "age.100.years.and.over"), 
+                                   ordered=TRUE)
+
+#West Australia
+age.group.WA <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "West Australia") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, 
+         age.30to34.years, age.35to39.years, age.40to44.years, 
+         age.45to49.years, age.50to54.years, age.55to59.years, 
+         age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years,age.80to84.years, age.85to89.years, 
+         age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.WA$age.group <- factor(age.group.WA$age.group, 
+                                   levels = c("age.0to4.years", 
+                                              "age.5to9.years",
+                                              "age.10to14.years", 
+                                              "age.15to19.years", 
+                                              "age.20to24.years", 
+                                              "age.25to29.years", 
+                                              "age.30to34.years", 
+                                              "age.35to39.years", 
+                                              "age.40to44.years", 
+                                              "age.45to49.years", 
+                                              "age.50to54.years", 
+                                              "age.55to59.years",
+                                              "age.60to64.years", 
+                                              "age.65to69.years", 
+                                              "age.70to74.years", 
+                                              "age.75to79.years", 
+                                              "age.80to84.years",
+                                              "age.85to89.years", 
+                                              "age.90to94.years", 
+                                              "age.95to99.years", 
+                                              "age.100.years.and.over"), 
+                                   ordered=TRUE)
+  
+#Tasmania
+age.group.TAS <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "Tasmania") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, 
+         age.30to34.years, age.35to39.years, age.40to44.years, 
+         age.45to49.years, age.50to54.years, age.55to59.years, 
+         age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years,age.80to84.years, age.85to89.years, 
+         age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.TAS$age.group <- factor(age.group.TAS$age.group, 
+                                    levels = c("age.0to4.years", 
+                                               "age.5to9.years",
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)
+  
+#Northern Territory
+age.group.NT <- abs.age.group.state %>% ungroup() %>% 
+  filter(State == "Northern Territory") %>% 
+  select(Income.year, age.0to4.years, age.5to9.years,age.10to14.years, 
+         age.15to19.years, age.20to24.years, age.25to29.years, 
+         age.30to34.years, age.35to39.years, age.40to44.years, 
+         age.45to49.years, age.50to54.years, age.55to59.years, 
+         age.60to64.years, age.65to69.years, age.70to74.years,
+         age.75to79.years,age.80to84.years, age.85to89.years, 
+         age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.NT$age.group <- factor(age.group.NT$age.group, 
+                                   levels = c("age.0to4.years", 
+                                               "age.5to9.years",
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)
+#Country
+abs.age.group.Country <- ato_abs.data %>% group_by(Income.year) %>% 
+  summarise(age.0to4.years = sum(age.0to4.years), 
+            age.5to9.years = sum(age.5to9.years),
+            age.10to14.years = sum(age.10to14.years), 
+            age.15to19.years = sum(age15to19.years),
+            age.20to24.years = sum(age.20to24.years), 
+            age.25to29.years = sum(age.25to29.years),
+            age.30to34.years = sum(age.30to34.years), 
+            age.35to39.years = sum(age.35to39.years),
+            age.40to44.years = sum(age.40to44.years), 
+            age.45to49.years = sum(age.45to49.years),
+            age.50to54.years = sum(age.50to54.years), 
+            age.55to59.years = sum(age.55to59.years),
+            age.60to64.years = sum(age.60to64.years), 
+            age.65to69.years = sum(age.65to69.years),
+            age.70to74.years = sum(age.70to74.years), 
+            age.75to79.years = sum(age.75to79.years),
+            age.80to84.years = sum(age.80to84.years), 
+            age.85to89.years = sum(age.85to89.years),
+            age.90to94.years = sum(age.90to94.years), 
+            age.95to99.years = sum(age.95to99.years),
+            age.100.years.and.over = sum(age.100.years.and.over)
+            ) %>%
+  mutate(children.0to14 = (age.0to4.years + age.5to9.years + age.10to14.years), 
+         working.pop.15to64 = (age.15to19.years + age.20to24.years + 
+                                 age.25to29.years + age.30to34.years + 
+                                 age.35to39.years + age.40to44.years + 
+                                 age.45to49.years + age.50to54.years + 
+                                 age.55to59.years + age.60to64.years),
+         pension.65to84 = (age.65to69.years + age.70to74.years + 
+                             age.75to79.years + age.80to84.years),
+         pension.85.and.over = (age.85to89.years + age.90to94.years + 
+                                  age.95to99.years + 
+                                  age.100.years.and.over)) %>%
+  mutate(state.population = children.0to14 + working.pop.15to64 + 
+           pension.65to84 + pension.85.and.over)
+
+age.group.AUS <- abs.age.group.Country %>% ungroup() %>%  
+  select(Income.year, age.0to4.years, age.5to9.years,
+         age.10to14.years, age.15to19.years, age.20to24.years, 
+         age.25to29.years, age.30to34.years, age.35to39.years, 
+         age.40to44.years, age.45to49.years, age.50to54.years, 
+         age.55to59.years, age.60to64.years, age.65to69.years, 
+         age.70to74.years, age.75to79.years,age.80to84.years, 
+         age.85to89.years, age.90to94.years, age.95to99.years,
+         age.100.years.and.over) %>% 
+  gather("age.group", "Population", 2:22) %>%
+  group_by(Income.year) %>%
+  mutate(ratio.pop = (Population/sum(Population))*100)
+
+  age.group.AUS$age.group <- factor(age.group.AUS$age.group, 
+                                    levels = c("age.0to4.years", 
+                                               "age.5to9.years",
+                                               "age.10to14.years", 
+                                               "age.15to19.years", 
+                                               "age.20to24.years", 
+                                               "age.25to29.years", 
+                                               "age.30to34.years",
+                                               "age.35to39.years", 
+                                               "age.40to44.years", 
+                                               "age.45to49.years", 
+                                               "age.50to54.years", 
+                                               "age.55to59.years",
+                                               "age.60to64.years", 
+                                               "age.65to69.years", 
+                                               "age.70to74.years", 
+                                               "age.75to79.years", 
+                                               "age.80to84.years",
+                                               "age.85to89.years", 
+                                               "age.90to94.years", 
+                                               "age.95to99.years", 
+                                               "age.100.years.and.over"), 
+                                    ordered=TRUE)  
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.NSW, aes(x = age.group, y = ratio.pop, fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  xlab("Age Groups") +
+  ylab("Population ratio") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ggtitle("Age Distribution for New South Wales (NSW)")
+
+```
+
+The first observation made was in the increase in the population of people in 
+the age groups of 60 to 74 years of age. From 2006 onwards there's a been a 
+decrease in the younger age groups. So NSW is experiencing an ageing population
+and interestingly the box plot looks like it's bi-modal.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.VIC, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ggtitle("Age Distribution for Victoria (VIC)")
+
+```
+
+Like NSW, there's an increase in the population of people in the age groups from
+60 to 74. However unlike NSW, there's been an increase in the population in the
+age groups from 25 to 34 from 2006 onwards. Still this isn't enough to offset 
+the growth of the older age groups. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.QLD, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Queensland (QLD)")
+
+```
+
+The QLD state seems to show similar properties to NSW in terms of growth in the
+population of people aged between 60 and 74 yrs of age. There's no real growth 
+in the younger population age groups.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.ACT, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge",color = "black") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Australian Capital Territory (ACT)")
+  
+
+```
+
+The ACT has seen growth in the 30 to 34 years old age group. Again, it's showing
+growth in the older age groups i.e. people over 60 years of age.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.SA, aes(x = age.group, y = ratio.pop, 
+                                fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge",color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ggtitle("Age Distribution for South Australia (SA)")
+  
+```
+
+Again the state of South Australia shows an ageing population. In other words 
+there is a growth in population of people in the age groups of 60 to 74. This is 
+compounded by a decline in the younger population of people. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.WA, aes(x = age.group, y = ratio.pop, 
+                                fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Western Australia (WA)")
+
+```
+
+Western Australia is showing an increase in the age groups from 25 to 34. This
+looks to be however offset by an increased growth in people in the age groups
+60 to 74. Interestingly the group in the 25 to 34 year old groups show a trend 
+upwards bigger than the previous states.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = age.group.NT, aes(x = age.group, y = ratio.pop, 
+                                fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Northern Territory (NT)")
+```
+
+There's been an increase in the 25 to 34 year old age groups. The increase is
+similar to that of WA. Again this is offset by an increase in the age groups 
+from 60 to 74.  
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.TAS, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Tasmaina (TAS)")
+
+```
+
+Compared to all the other states, Tasmania has hown a remarkable increase in 
+the 60 to 74 year old age groups. In terms of percentage of the total population
+for the state, the growth is remarkable when compared to other states.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = age.group.AUS, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio") +
+  ggtitle("Age Distribution for Australia")
+
+
+```
+
+I had aggregated the bar plots to the state level. This was done to see how each
+state differed to each other. New dataframes were created to separate the data
+for each state grouped by year of Income.  Interestingly enough, the data for 
+each state showed that they were bi-modal in terms of distribution.
+
+From the Australian Bureau of Statistics (ABS), the working population is 
+defined as 15 to 64 years of age (http://www.abs.gov.au/AUSSTATS/abs@.nsf/Previousproducts/3101.0Feature%20Article1Jun%202016). 
+With the exception of Tasmania and ACT, there has been growth if slightly 
+compared to other states in the age group of 25 to 34 year of age. 
+What does this have to do with taxation? Well if one was looking at preventing 
+the down turn of the Government's revenue through taxation, then it has to 
+seriously start exploring the increasing the range of the working population ie 
+look at possiby increasing the retirement age from 65 to 75. Alternatively it 
+could look at incentivising younger families to have more children or allowing 
+more young families to migrate to Australia in order to offset the ageing 
+population. The percentage of the total population the age group ranging from 
+55 to 79 years of age, is growing for each state namely Tasmania and ACT. So the 
+question for both ACT and Tasmania is that, what can they do to attract a 
+younger working population?
+
+Generally across the whole country, there has been increase in the ageing 
+population across Australia. This is backed up by the bar plot for the entire 
+country. This raises some interesting questions such as will Australia need to
+raise the retirement age from 65?
+
+
+
+# Relationships between Age groups, Net Tax payable and Salary
+
+```{r}
+ggcorr(ato_abs.data[c(6,12,18:38)], nbreaks = 4, palette = "RdGy", label = TRUE, 
+       label_size = 2, label_color = "white", hjust = 1, size = 1.9, 
+       color = "grey50", layout.exp = 2)
+
+```
+
+The correlation between the various age groups and Net tax as well as Salary 
+is quite high. With all the high correlations with each data point, there was
+no real outcome or analysis that could come out of it. So there was no point 
+in trying to analyse between Net Tax and Salary with each of the age groups.
+
+```{r}
+
+ggcorr(ato_abs.data[c(4:17)], nbreaks = 4, palette = "RdGy", label = TRUE, 
+       label_size = 2, label_color = "white", hjust = 1, size = 3, 
+       color = "grey50", layout.exp = 3)
+
+```
+
+Were there any meaningful relationships that could be further explored when it 
+with other Taxation-related parameters. From the above correlation matrix,
+it would be worthwhile to explore Net rental income with both tax and the total
+deductions. However, before that it would be good to confirm the obvious
+relationship between Net tax and Salary. Is there anything interesting?
+
+# Net Tax vs Salary
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = ato_abs.data, aes(x = Salary.or.wages/1000000, 
+                                y = Net.tax/1000000, 
+                                color = Income.year)) +
+  geom_point(alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth(method = "lm") +
+  xlab("Salary ('000000s)") +
+  ylab("Net Tax payable ('000000s)") +
+  ggtitle("Net Tax Payable vs Salary")
+
+
+```
+
+At first glance, there's definitely a strong relationship between the Salary 
+and the Net Tax. It's quite clear that the more you earn the more tax you pay. 
+This could be an informative plot however let's get down to the individual
+level.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = ato_abs.data, aes(x = Salary.or.wages/Individuals, 
+                                y = Net.tax/Individuals,
+                                color = Income.year)) +
+  geom_point(alpha = 0.5) +
+  scale_color_brewer(palette = "Dark2") +
+#  coord_trans(y = "log10") +
+  scale_y_log10(breaks = seq(0, 80000, 20000)) +
+  geom_smooth() +
+  xlab("Salary per Individual") +
+  ylab("Net Tax payable per Individual") +
+  ggtitle("Net Tax Payable vs Salary per Individual")
+
+```
+
+I decided to look at the relationship closer by dividing by the number of 
+individuals aggregated at the postcode level. This was to give me the 
+relationship of Net Tax payable vs Salary at an individual level. Instead of a 
+linear model method for the geom_smooth function, I let the function choose it's 
+own method of best fit. What's interesting to note is that up to \$90000 salary, 
+the Net Tax payable grows exponentially. However, beyond \$90000 salary, the Net 
+tax payable seems to level off around \$40000. This could mean that salaries 
+beyond \$90000, The Net Tax payable at an individual level seems to level off no 
+matter how high one's salary is. This could also mean that people earning more 
+than \$90000, could be aggresively increasing their tax deductions by being able 
+to afford to. What's also interesting to note is that the Net tax payable is 
+lower for years 2011 and 2015 than that of 2006. There's not much of a 
+difference in data between 2011 and 2015 however, salaries seem to have 
+increased between 2011 and 2015.
+
+# Net tax payable vs Total Deductions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = ato_abs.data, aes(y = Net.tax/Individuals, 
+                                x = Total.deductions/Individuals,
+                                color = Income.year)) +
+  geom_point(alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth() +
+  xlab("Total Deductions per Individual") +
+  ylab("Net Tax payable per Individual") +
+  ggtitle("Net Tax Payable vs Total Tax Deductions on an Individual basis")
+
+```
+
+In the plot, "Net Tax payable vs Total Deductions", it appears that the Total 
+tax payable starts to taper off for Individuals trying to claim over $7500 in 
+tax deductions.
+This is interesting because it's saying that no matter how much one tries to 
+claim in tax deductions, it may not really result in big tax savings.
+
+# Net Rental Income vs Net Tax
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = ato_abs.data, aes(x = Net.tax/Individuals, 
+                                          y = Net.rent/Individuals,
+                                          color = Income.year)) +
+  geom_point(alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+#  scale_x_log10(break=c(0,1000,)) +
+  geom_smooth() +
+  theme(text = element_text(size=7)) +
+  ylab("Net Rental Income per Individual") +
+  xlab("Net Tax payable per Individual") +
+  ggtitle("Net Rental Income vs Net Tax as per Individual")
+
+```
+
+The above graph plot shows a "-ve" correlation and To create
+a cleaner plot, I used Net tax as a predictor. It shows that having a loss in 
+rental income can contribute towards a lower Net tax or vice versa. However, 
+for individuals paying between \$20000 and \$25000 in tax have resulted in the
+maximum claim of rental loss. After that point, as the individual pays more tax, 
+it's shown that the rental income increases. This is commonly known as negative 
+gearing in Australia where individuals show a loss in rental income in order to 
+offset against their tax. So higher taxed individuals are those most likely to 
+have positive rental income otherwise known as "postive" gearing. 
+Also observed in the above plot, is that Net rental incomes rose in 2015. This 
+could be attributed to 2 factors of lower interest rates on loans and higher 
+rents for 2015 when compared to 2011.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+deduct01 <- ggplot(data = ato_abs.data, aes(x = Net.rent/Individuals, 
+                                            y = Total.deductions/Individuals)) +
+  geom_point(aes(color = Income.year), alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth(method = "lm") +
+  theme(text = element_text(size=7)) +
+  xlab("Net Rental Income per Individual") +
+  ylab("Total deductions per Individual") +
+  ggtitle("Total deductions vs Net Rental Income as per Individual")
+
+deduct02 <- ggplot(data = ato_abs.data, 
+                   aes(x = Total.work.related.expenses/Individuals, 
+                       y = Total.deductions/Individuals)) +
+  geom_point(aes(color = Income.year), alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth(method = "lm") +
+  theme(text = element_text(size=7)) +
+  xlab("Total work related expenses per Individual") +
+  ylab("Total deductions per Individual") +
+  ggtitle("Total deductions vs Total work related expenses per Individual")
+
+deduct03 <- ggplot(data = ato_abs.data, aes(x = Gifts.or.donations/Individuals, 
+                                            y = Total.deductions/Individuals)) +
+  geom_point(aes(color = Income.year), alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth(method = "lm") +
+  theme(text = element_text(size=7)) +
+  scale_x_continuous(breaks = seq(0,6000, 500), limits = c(0, 6000)) +
+  xlab("Gifts or donations per Individual") +
+  ylab("Total deductions per Individual") +
+  ggtitle("Total deductions vs Gifts or donations per Individual")
+
+grid.arrange(deduct01, deduct02, deduct03, ncol = 1)
+
+```
+
+I picked the 3 popular items that most common tax paying individuals would look 
+at in terms of reducing their tax. I compared them with the Total deductions 
+column in the dataset. Looking at the first of 3 plots, there was no correlation 
+between rental income and the total deductions. I was initially surprised at 
+this but then investigating this further, I found that the Tax Office doesn't 
+include rental income loss in calculating the Total deductions. So it could 
+explain the very low correlation. However, both "Gifts or Donations" and "Total 
+Work related expenses" are indeed part of the calculation of "Total Deductions" 
+column in the dataset. There was a higher correlation between Gifts/Donations 
+and Total Deductions as opposed to "Total work related expenses" vs "Total 
+Deductions". Looking closer at those 2 plots, it's looking like Total Tax 
+deductions have come down over the years whilst there has been slight increases 
+in both giving and claiming more tax related expenses. Could it be a case of the 
+Australian Tax Office being a bit more stringent? This is something that can be 
+investigated further
+
+
+------
+
+# Final Plots and Summary
+
+Below are three plots that I felt were important:
+
+### Plot One
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+
+ggplot(data = age.group.AUS, aes(x = age.group, y = ratio.pop, 
+                                 fill = Income.year, group = Income.year)) +
+  geom_bar(stat = "identity", position = "dodge", color = "black") + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  xlab("Age Groups") +
+  ylab("Population ratio (%)") +
+  ggtitle("Age Distribution for Australia")
+
+```
+
+### Description One
+I actually wanted to put all the bar plots for each state. That would have been 
+too much. So instead, I put up the bar plot for all of Australia which sort
+of best summarises the finding. Compared to 2006, the growth in the population
+ratio of people in the age groups between 60 and 74 has risen over the years. 
+This growth has been more rapid than any other age group. So what does this 
+underlying trend show? Basically, ageing population means more people may 
+retire and therefore revenue associated with taxation could drop as less people
+leave the workfore. The government may try to offset this with either raising
+the retirement age, raise taxes over a period of time or increase the 
+consumption tax otherwise known as the Goods and Services Tax (GST).
+
+### Plot Two
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
+
+ggplot(data = ato_abs.data, aes(x = Salary.or.wages/Individuals, 
+                                y = Net.tax/Individuals,
+                                color = Income.year)) +
+  geom_point(alpha = 0.5) +
+  scale_color_brewer(palette = "Dark2") +
+  coord_trans(y = "log10") +
+  geom_smooth() +
+  xlab("Salary per Individual (AUD)") +
+  ylab("Net Tax payable per Individual (AUD)") +
+  ggtitle("Net Tax Payable vs Salary per Individual")
+
+
+```
+
+### Description Two
+This second plot was interesting in how it shows two emerging patterns in my
+humble opinion. It shows that leading up to approx \$75000, the net tax payable
+increases logrithmically as salary increases. Then after that point, it starts 
+to level off at around \$40000 as salary increases. So will that mean as one 
+earns more than \$75000 and it increases annually, you will end up paying tax 
+at a lessor rate
+than those earning less? This could mean one that the rich are less burdened by 
+taxation than those earning less than \$75000. Those earning more also benefit 
+by being able to afford tax minimisation strategies by hiring such experts. 
+
+### Plot Three
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Three}
+
+ggplot(data = ato_abs.data, aes(x = Net.tax/Individuals, 
+                                y = Net.rent/Individuals,
+                                color = Income.year)) +
+  geom_point(alpha = 0.5) + 
+  scale_color_brewer(palette = "Dark2") +
+  geom_smooth() +
+#  theme(text = element_text(size=7)) +
+  ylab("Net Rental Income per Individual (AUD)") +
+  xlab("Net Tax per Individual (AUD)") +
+  ggtitle("Net Rental Income vs Salary as per Individual")
+
+```
+
+### Description Three
+This third plot shows rental income vs Net Tax at an individual level. It's 
+noteworthy in how it's a negative relationship as Net Tax payable increases, the 
+net rental income after expenses drops. However as the individual has a Net tax 
+\> \$30000, It shows that the rental income has a tendency to increase. 
+This is a strategy for high income earners to try to minimise their tax payments 
+by showing a loss in terms of rental income from their investment property 
+portfolio. 
+
+This strategy as mentioned earlier is known as negative gearing. 
+It's used by individuals on higher salaries. It's also interesting to note that 
+rental income has increased from 2011 to 2015. This increase is a result of 
+interest rates on the loans dropping coupled with higher rents being charged by 
+investors. 
+
+------
+
+# Reflection
+
+In looking at the data, what I've been able to glean from the data are the 
+following insights:
+- Australia is starting to have an ageing population. This could prove to be an 
+issue for the Federal government in the next few years as tough decisions will 
+need to be made and will the population accept it.
+- When Net Tax and Salary is shown to have a very high correlation when 
+aggregated at the postcode level. However when taken down to the individual 
+level, some interesting patterns start to come up. Up to approx $75000 in 
+Salary, It looks to be a linear relationship however beyond that, it starts to 
+level off. This could either mean one of two things that the tax system could be 
+beneficial to high earning individuals in allowing them to take home more
+pay or it could mean that high tax individuals are able to afford to pay for 
+taxation advice that will result in more tax offsets.
+- A very popular way of reducing tax as individuals have higher salaries, is to 
+take advantage of rental income loss in order to lower their payable tax. This 
+is known as negative gearing. This brings about a strong culture of buying 
+investment property for higer income individuals.
+- Surprisingly, individuals earning \$90000 and more, seem to claim less than 
+\$5000. I would have thought it would be more. Maybe they look claim other tax 
+offsets that fall outside the realm of direct tax deductions. See the pdf <> for 
+details on how tax deductions are calculated.
+- A trend that was found that rental incomes from investment property increased 
+from 2006 to 2015. Another interesting observation was that Salaries also 
+increase. These increases seem small and could even suggest to keep up with 
+inflation. Additionally, tax deductions have decreased slightly over the years.
+- 2011 is a very interesting year. At certain data points it bucks the trend
+e.g. the plot "Net Tax per Individual for each Year - Boxplot" where the Median
+Net Tax payable is lowere than 2006 and 2015. I would use this as an example as
+to why further insight is required to investigate why.
+
+The main issues I found with this dataset was:
+- I felt the data it was aggregated too much. Take for example, just because
+a particular postcode could have more of a North Western European ethnic group,
+it doesn't necessarily mean that particular ethnic group contributed to higher
+salaries and thereby contributing more to tax. I felt that there quite a bit of
+those situations throughout the dataset.
+- It would have been better to include job categories and combine that together
+with the Ethnic groups. Additionally, with job categories, it would have been
+nice to 
+- Only 3 years of data was provided which were 2006, 2001 and 2015. It would 
+have been better to have data from 2006 till 2017 incrementing by 1 year. This
+could have been better to get a closer at the trends in my opinion.
+in-between years as well as more up to date data ie 2017.
+- I felt that I couldn't do much analysis with data associated with both 
+ethnicity and marriage status and fortnightly income columns. I couldn't see any 
+meaningful correlations or relationships in trying to 
+
+So what can be done further with this dataset? I'm not sure that this dataset
+could be used to gain further insights for the reasons mentioned 
+above. However, as I was researching on the internet for other datasets 
+available in this area that could be used for further insights, I had come 
+across eechidna. 
+(URL: https://cran.r-project.org/web/packages/eechidna/index.html). Eechidna
+would be a good dataset to use to drill into the areas that were identified in 
+this analysis in conjunction with further data from the Australian Taxation 
+Office (ATO). To conclude
+
+
+
